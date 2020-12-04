@@ -1,0 +1,39 @@
+html, body, #map {
+  height: 100%;
+  width: 100%;
+}
+body {
+  padding: 0;
+  margin: 0;
+}
+
+.info {
+  font-size:14px;
+  color: #1a1a1a;
+  padding: 6px 8px;
+  font: 16px/18px Arial, Helvetica, sans-serif;
+  background: white;
+  background: rgba(255,255,255,1);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  border-radius: 5px;
+}
+.info:empty {
+  display:none;
+}
+
+.modal-fullscreen {
+  width: 95% !important;
+  /* height: 90% !important; */
+  max-width: none;
+  max-height: none;
+  /* padding: 0; */
+}
+
+.leaflet-control-attribution a {
+  color: #6d6e70 !important;
+  cursor: pointer;
+}  
+.app-img {
+  max-height: 100px;
+  max-width: 100px;
+}
