@@ -7,6 +7,8 @@ body {
   margin: 0;
 }
 
+.leaflet-container { background: #a2d1e4; }
+
 .info {
   font-size:14px;
   color: #1a1a1a;
@@ -14,11 +16,25 @@ body {
   font: 16px/18px Arial, Helvetica, sans-serif;
   background: white;
   background: rgba(255,255,255,1);
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
   border-radius: 5px;
 }
 .info:empty {
   display:none;
+}
+
+#global-btn {
+  position: absolute;
+  color: #000;
+  left: 6px;
+  bottom: 6px;
+  background: white;
+  background: rgba(255,255,255,1);
+  z-index: 1000;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+#global-btn:hover {
+  background: #ccc;
 }
 
 .modal-fullscreen {

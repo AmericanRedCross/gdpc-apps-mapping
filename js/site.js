@@ -1,5 +1,6 @@
 /* GLOBAL VARIABLES */
 var world, appDirectory, geojson;
+var globalAppCount = 0;
 
 var map = L.map('map').setView([0, 0], 2);
 map.fitBounds([
@@ -45,7 +46,16 @@ function formatData(dataArray){
       appDirectory[i]['countries'] = []
     }
 	}
+	
+	/* GET COUNT OF GLOBAL APPS */
+	for(var j = 0; j < appDirectory.length; j++){ 
+		if($.inArray("global", appDirectory[j].countries) != -1){
+		  globalAppCount ++;
+		}
+	}
+	$("#global-count").html(globalAppCount);
 
+	/* TO EACH COUNTRY, ADD THE COUNT OF COUNTRY SPECIFIC APPS */
   for(var i = 0; i < world.features.length; i++){
     var thisIso = world.features[i].properties.iso;
     world.features[i].properties.app_count = 0;
@@ -53,14 +63,82 @@ function formatData(dataArray){
       if($.inArray(thisIso, appDirectory[j].countries) != -1){
         world.features[i].properties.app_count ++;
       }
-      if($.inArray("global", appDirectory[j].countries) != -1){
-        world.features[i].properties.app_count ++;
-      }
     }
   }
   
 	mapIt();
 }
+
+function globalClick(){
+	$('.modal-title').html("Global - " + globalAppCount + appOrApps(globalAppCount));
+	callModal("global");
+}
+
+function appOrApps(count){
+	return (count == 1) ? " app" : " apps";
+}
+
+function geoClick(e){
+	var thisIso = e.target.feature.properties.iso;
+	var appCount = e.target.feature.properties.app_count;
+	$('.modal-title').html(e.target.feature.properties.name + " - " + appCount + appOrApps(appCount));
+	callModal(thisIso);
+}
+
+function callModal(iso){
+	$('#apps-info').empty();
+	$('#global-apps-info').empty();
+	
+	/* THIS HELPER FUNCTION GENERATES THE HTML FOR THE INFO ON AN APP */
+	function appHtml(d){
+		var myHtml = 
+			'<div class="media mb-4">' +
+				'<img class="app-img mr-3" src="./img/'+ ((!!d.logo) ? d.logo : "noun_App_3166100.png") + '" alt="app image">' +
+				'<div class="media-body">' +
+					"<h5 class='app-title'>" + d.app_name + "</h5>" + 
+					"<div class='app-description mb-2'>" + 
+						d.description +
+						" <small class='app-category text-muted'>[" + d.category +  " | developed by: " + d.app_developer + "]</small>" +
+					"</div>" +
+					"<div class='app-links'>" + // links to download
+						((d.link_apple || d.link_google) ? "Get it on " : "") +
+						((!!d.link_google) ? '<a href=' + d.link_google + ' target="_blank">Google Play Store <i class="app-link-icon fab fa-google-play"></i></a>' : '') +
+						((d.link_apple && d.link_google) ? " or " : '' )+
+						((!!d.link_apple) ? '<a href=' + d.link_apple + ' target="_blank">Apple App Store <i class="app-link-icon fab fa-app-store-ios"></i></a>' : '') +
+					"</div>" + 
+				'</div>' + //.media-body 
+			'</div>'  // .media
+		return myHtml;
+	}
+	
+	/* ADD ALL THE MATCHING APPS */
+	d3.select('#apps-info').selectAll('div')
+		.data(appDirectory)
+		.enter().filter(function(d){
+			return $.inArray(iso, d.countries) != -1
+		})
+		.append('div')
+		.html(function(d){
+			return appHtml(d);
+		})
+	/* IF IT'S A COUNTRY (NOT GLOBAL) THEN ADD A SECTION WITH THE GLOBAL APPS */
+	if(iso !== "global"){
+		d3.select('#apps-info').append('div').html("<hr><h5>Global - " + globalAppCount + appOrApps(globalAppCount) + "</h5>");
+		d3.select('#apps-info').append('div').attr('id',"global-apps-info");
+		d3.select('#global-apps-info').selectAll('div')
+			.data(appDirectory)
+			.enter().filter(function(d){
+				return $.inArray('global', d.countries) != -1
+			})
+			.append('div')
+			.html(function(d){
+				return appHtml(d);
+			})
+	}
+	/* THE MODAL IS SET UP, NOW LET'S CALL IT AND MAKE IT VISIBLE */
+	$('#modal').modal()
+}
+
 
 function mapIt(){
 
@@ -72,14 +150,14 @@ function mapIt(){
   };
   // method that we will use to update the control based on feature properties passed
   info.update = function(props){
-      this._div.innerHTML = props ? '<div>' + props.name + ' - ' + props.app_count + ' apps</div>' : '';
+      this._div.innerHTML = props ? '<div>' + props.name + ' - ' + props.app_count + appOrApps(props.app_count) + '</div>' : '';
   };
   info.addTo(map);
   
   function highlightFeature(e){
     var layer = e.target;
     layer.setStyle({
-      weight: 4,
+      weight: 3,
       color: '#666',
       dashArray: '',
     });
@@ -93,40 +171,7 @@ function mapIt(){
     geojson.resetStyle(e.target);
     info.update()
   }
-  
-  function geoClick(e){
-    $('#apps-info').empty();
-    var thisIso = e.target.feature.properties.iso;
-    $('.modal-title').html(e.target.feature.properties.name + " - " + e.target.feature.properties.app_count + " apps") 
-    d3.select('#apps-info').selectAll('div')
-      .data(appDirectory)
-      .enter().filter(function(d){
-        return $.inArray(thisIso, d.countries) != -1 || $.inArray('global', d.countries) != -1
-      })
-      .append('div')
-      .html(function(d){
-        var myHtml = 
-          '<div class="media mb-4">' +
-            '<img class="app-img mr-3" src="./img/'+ ((!!d.logo) ? d.logo : "noun_App_3166100.png") + '" alt="app image">' +
-            '<div class="media-body">' +
-              "<h5 class='app-title'>" + d.app_name + "</h5>" + 
-              "<div class='app-description mb-2'>" + 
-                d.description +
-                " <small class='app-category text-muted'>[" + d.category +  " | developed by: " + d.app_developer + "]</small>" +
-              "</div>" +
-              "<div class='app-links'>" + // links to download
-                ((d.link_apple || d.link_google) ? "Get it on " : "") +
-                ((!!d.link_google) ? '<a href=' + d.link_google + ' target="_blank">Google Play Store <i class="app-link-icon fab fa-google-play"></i></a>' : '') +
-                ((d.link_apple && d.link_google) ? " or " : '' )+
-                ((!!d.link_apple) ? '<a href=' + d.link_apple + ' target="_blank">Apple App Store <i class="app-link-icon fab fa-app-store-ios"></i></a>' : '') +
-              "</div>" + 
-            '</div>' + //.media-body 
-          '</div>'  // .media
-        return myHtml;
-      })
-    $('#modal').modal()
-  }
-  
+	
   function onEachFeature(feature, layer){
     layer.on({
         mouseover: highlightFeature,
@@ -141,11 +186,12 @@ function mapIt(){
   //         .range(["#fc9272","#ef3b2c","#a50f15"]) // reds
   //         .domain([min, max])
   function getColor(d){
-    return d >= 10   ? '#67000d' :
-           d >= 5    ? '#cb181d' :
-           d >= 3    ? '#fb6a4a' :
-           d >= 1    ? '#fcbba1' :
-                       '#d9d9d9';
+    return d >= 10   ? '#9c1711' :
+           d >= 5    ? '#c01d15' :
+           d >= 3    ? '#e32219' :
+					 d >= 2    ? '#e9423a' :
+           d >= 1    ? '#ed645d' :
+                       '#c2c2c2';
   }
   
   function geoStyle(feature){
